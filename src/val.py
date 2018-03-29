@@ -1,5 +1,4 @@
 from logs import logDecorator as lD
-from lib import simpleLib as sL
 import json, importlib
 from importlib import util
 
@@ -58,25 +57,7 @@ def main(logger):
     # ------------------------------------
     importModules()
 
-    # Lets just create a simple testing 
-    # for other functions to follow
-    # -----------------------------------
-
-    sampleValues = [
-        (1, 2),
-        (1.2, 5),
-        (3, 'a'),
-        ('First', 'Second'),
-        (55,)
-    ]
-
-    for s in sampleValues:
-        try:
-            sL.simpleTestFunction(*s)
-        except Exception as e:
-            logger.error('Unable to perform addition with values [{}]\n:{}'.format(
-                s, str(e)))
-
+    
     return
 
 if __name__ == '__main__':

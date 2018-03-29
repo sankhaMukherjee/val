@@ -29,6 +29,11 @@ checkTime:
 test:
 	python3 -m pytest ../tests
 
+# ---- Download data ------------------------------
+downloadMNIST:
+	../bin/mnist/download.sh
+
+# ---- Easy way of checking the functions ---------
 doc:
 	@echo 'Generating a fresh copy of the docs ...'
 	@rm -rf ../docs

@@ -2,14 +2,21 @@
     {
         "moduleName" : "module1",
         "path"       : "modules/module1/module1.py",
-        "execute"    : false ,
+        "execute"    : false,
         "description": "",
         "owner"      : ""
     },
     {
         "moduleName" : "mnistConvert",
         "path"       : "modules/mnistConvert/mnistConvert.py",
-        "execute"    : true ,
+        "execute"    : false,
+        "description": "",
+        "owner"      : ""
+    },
+    {
+        "moduleName" : "AE",
+        "path"       : "modules/AE/AE.py",
+        "execute"    : true,
         "description": "",
         "owner"      : ""
     }

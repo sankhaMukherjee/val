@@ -4,6 +4,11 @@ import tensorflow as tf
 
 from lib  import AElib 
 from logs import logDecorator as lD 
+from tqdm import tqdm 
+
+from datetime import datetime as dt
+
+import matplotlib.pyplot as plt
 
 config = json.load(open('../config/config.json'))
 logBase = config['logging']['logBase'] + '.modules.module1.module1'
@@ -21,15 +26,21 @@ def testVAE(logger):
         [description]
     '''
 
-    folder = '../data/raw/mnist'
-    file   = 't10k-images-idx3-ubytenpy.npy'
+    folder     = '../data/raw/mnist'
+    file       = 't10k-images-idx3-ubytenpy.npy'
+    labelsFile = 't10k-labels-idx1-ubytenpy.npy'
+    now        = dt.now().strftime('%Y-%m-%d--%H-%M-%S')
+    imgFolder  = '../results/img/{}'.format(now)
+    os.makedirs(imgFolder)
 
     X = np.load(os.path.join(folder, file)).astype(np.float32)
     X = X /255.0
     print(X.shape, X.max(), X.min())
 
+    labels = np.load(os.path.join(folder, labelsFile))
+
     nInp, nLatent, L = 784, 2, 1
-    layers           = [700, 500, 10]
+    layers           = [700, 500, 100]
     activations      = [tf.tanh, tf.tanh, tf.tanh]
 
     vae = AElib.AE(nInp, layers, activations, nLatent, L)
@@ -46,42 +57,113 @@ def testVAE(logger):
         print('Running the decoder ...')
         latent = np.random.normal( 0, 1, mu.shape )
         xHat   = sess.run(vae.decoder, feed_dict = {
-            vae.LMu    : mu,
-            vae.LSigma : sigma,
+            vae.Inp    : X,
             vae.Latent : latent })
 
         print(xHat.shape)
 
         aeError, KLErr, Err = sess.run([vae.aeErr, vae.KLErr, vae.Err], feed_dict = {
             vae.Inp    : X,
-            vae.LMu    : mu,
-            vae.LSigma : sigma,
             vae.Latent : latent})
 
         print('Autoencoder error: {}'.format(aeError))
         print('KL Divergence    : {}'.format(KLErr))
         print('Total error      : {}'.format(Err))
 
-        for _ in range(10):
+
+        print('Starting an optimization run')
+        for i in tqdm(range(1001)):
 
             latent = np.random.normal( 0, 1, mu.shape )
-            sess.run(vae.Opt, feed_dict = {
+            _, aeError, KLErr, Err = sess.run([vae.Opt, vae.aeErr, vae.KLErr, vae.Err], feed_dict = {
                 vae.Inp    : X,
-                vae.LMu    : mu,
-                vae.LSigma : sigma,
-                vae.Latent : latent})
-            
-            aeError, KLErr, Err = sess.run([vae.aeErr, vae.KLErr, vae.Err], feed_dict = {
-                vae.Inp    : X,
-                vae.LMu    : mu,
-                vae.LSigma : sigma,
                 vae.Latent : latent})
 
-            print('[{:10.3f}]-[{:10.3f}]-[{:10.3f}]'.format(aeError, KLErr, Err))
+            tqdm.write('AE error: [{:10.3f}] KL error: [{:10.3f}] Total Error: [{:10.3f}]'.format(aeError, KLErr, Err))
             
+            if i < 10:
+                saveCrit = 2 
+            elif i < 100:
+                saveCrit = 10
+            elif i < 200:
+                saveCrit = 20
+            else:
+                saveCrit = 50
+
+            if i % saveCrit == 0:
+
+                XHat = sess.run(vae.decoder, feed_dict = {
+                    vae.Inp    : X,
+                    vae.Latent : latent})            
+
+                # plt.figure()
+                # plt.scatter(mu[:, 0], mu[:, 1], c=labels)
+                # plt.savefig('{}/mu_{:010}.png'.format(imgFolder, i))
+
+                plt.figure( figsize=(10,6) )
+
+                for j in range(10):
+                    for k in range(3):
+
+                        ax = plt.axes([j*0.1, + k*1.0/6, 0.1, 1.0/6])
+                        ax.imshow( XHat[k*10+j].reshape(28, 28), cmap=plt.cm.hot )
+                        ax.set_xticks([]); ax.set_yticks([]);
+
+                        ax = plt.axes([j*0.1, 0.5 + k*1.0/6, 0.1, 1.0/6])
+                        ax.imshow( X[k*10+j].reshape(28, 28), cmap=plt.cm.hot  )
+                        ax.set_xticks([]); ax.set_yticks([]);
+
+                plt.savefig('{}/comparison_{:010}.png'.format(imgFolder, i))
+
+                plt.close('all')
+
+        print('Running the decoder')
+
+        mu, sigma = sess.run([vae.mu, vae.sigma], 
+                feed_dict = { vae.Inp : X} )
+
+        print('mu    = {} -> {}'.format(mu.max(axis=0), mu.min(axis=0)))
+        print('sigma = {} -> {}'.format(sigma.max(axis=0), sigma.min(axis=0)))
+
         
+        print('Generating the new set of images ...')
+        print('------------------------------------')
+        muMax     = mu.max(axis=0)
+        muMin     = mu.min(axis=0)
+        muMean    = list(mu.mean(axis=0))
+        sigmaMean = list(mu.mean(axis=0))
+        # Just look at the first two axes ...
+        Nmax = 20
+        muNew, sigmaNew = [], []
+        for i in np.linspace(muMin[0], muMax[0], Nmax):
+            for j in np.linspace(muMin[1], muMax[1], Nmax):
+                temp = [i, j] + muMean[2:]
+                muNew.append( temp )
+                sigmaNew.append( sigmaMean )
+
+        muNew    = np.array(muNew)
+        sigmaNew = np.array(sigmaNew)
+        latent   = np.random.normal( 0, 1, muNew.shape )
+
+        newVal = sess.run( vae.decoder, feed_dict = {
+                vae.mu    : muNew,
+                vae.sigma : sigmaNew,
+                vae.Latent : latent })
+
+        plt.figure(figsize=(10,10))
+        frac = 1/Nmax
+        for i in tqdm(range(Nmax)):
+            for j in tqdm(range(Nmax)):
+                ax = plt.axes([i*frac, j*frac, frac, frac])
+                ax.imshow( newVal[i*Nmax+j].reshape(28, 28), cmap=plt.cm.gray )
+                ax.set_xticks([]); ax.set_yticks([]);
+
+        plt.savefig('{}/generated.png'.format(imgFolder))
+        plt.close('all')
 
 
+
+            
     return
 
 @lD.log(logBase + '.main')

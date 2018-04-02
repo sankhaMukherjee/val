@@ -72,7 +72,7 @@ def testVAE(logger):
 
 
         print('Starting an optimization run')
-        for i in tqdm(range(1001)):
+        for i in tqdm(range(5001)):
 
             latent = np.random.normal( 0, 1, mu.shape )
             _, aeError, KLErr, Err = sess.run([vae.Opt, vae.aeErr, vae.KLErr, vae.Err], feed_dict = {

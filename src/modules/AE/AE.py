@@ -22,8 +22,8 @@ def testVAE(logger):
     
     Parameters
     ----------
-    logger : {[type]}
-        [description]
+    logger : {logging.Logger}
+        The logger function
     '''
 
     folder     = '../data/raw/mnist'
@@ -117,6 +117,9 @@ def testVAE(logger):
 
                 plt.close('all')
 
+        print('Saving the model')
+
+
         print('Running the decoder')
 
         mu, sigma = sess.run([vae.mu, vae.sigma], 
@@ -160,11 +163,66 @@ def testVAE(logger):
 
         plt.savefig('{}/generated.png'.format(imgFolder))
         plt.close('all')
-
-
-
             
     return
+
+@lD.log(logBase + '.testVAE1')
+def testVAE1(logger):
+    '''print a line
+    
+    This function simply prints a single line
+    
+    Parameters
+    ----------
+    logger : {logging.Logger}
+        The logger function
+    '''
+
+    folder     = '../data/raw/mnist'
+    file       = 't10k-images-idx3-ubytenpy.npy'
+    labelsFile = 't10k-labels-idx1-ubytenpy.npy'
+    now        = dt.now().strftime('%Y-%m-%d--%H-%M-%S')
+    imgFolder  = '../results/img/{}'.format(now)
+    os.makedirs(imgFolder)
+
+    X = np.load(os.path.join(folder, file)).astype(np.float32)
+    X = X /255.0
+    print(X.shape, X.max(), X.min())
+
+    labels = np.load(os.path.join(folder, labelsFile))
+
+    nInp, nLatent, L = 784, 2, 1
+    layers           = [700, 500, 100]
+    activations      = [tf.tanh, tf.tanh, tf.tanh]
+
+    vae = AElib.AE(nInp, layers, activations, nLatent, L)
+    
+    print('VAE instance generated')
+
+    print('Fitting a function ...')
+    vae.fit(X, 2000)
+    
+    print('Getting the latent state values')
+    mu, sigma = vae.getLatent(X, vae.restorePoints[-1])
+    print(mu.mean(axis=0))
+
+    print('Making predictions ...')
+    xHat = vae.predict(X[:20], vae.restorePoints[-1])
+
+    plt.figure(figsize=(10, 5))
+    ax1 = plt.axes([0,0,0.5,1])
+    ax2 = plt.axes([0.5,0,0.5,1])
+    for i in range(xHat.shape[0]):
+
+        ax1.cla(); ax2.cla()
+        ax1.imshow( X[i].reshape(28, 28),    cmap=plt.cm.gray )
+        ax2.imshow( xHat[i].reshape(28, 28), cmap=plt.cm.gray )
+        ax1.set_xticks([]); ax1.set_yticks([]);
+        ax2.set_xticks([]); ax2.set_yticks([]);
+        plt.savefig(os.path.join(imgFolder, '{:05}.png'.format(i)))
+
+    return
+
 
 @lD.log(logBase + '.main')
 def main(logger):
@@ -180,7 +238,8 @@ def main(logger):
         The logger function
     '''
 
-    testVAE()
+    # testVAE()
+    testVAE1()
 
     return
 

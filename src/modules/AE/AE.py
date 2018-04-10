@@ -223,6 +223,54 @@ def testVAE1(logger):
 
     return
 
+@lD.log(logBase + '.loadSavedModel')
+def loadSavedModel(logger):
+    '''print a line
+    
+    This function simply prints a single line
+    
+    Parameters
+    ----------
+    logger : {logging.Logger}
+        The logger function
+    '''
+
+    folder     = '../data/raw/mnist'
+    file       = 't10k-images-idx3-ubytenpy.npy'
+    labelsFile = 't10k-labels-idx1-ubytenpy.npy'
+    now        = dt.now().strftime('%Y-%m-%d--%H-%M-%S')
+    
+    X = np.load(os.path.join(folder, file)).astype(np.float32)
+    X = X /255.0
+    print(X.shape, X.max(), X.min())
+
+    labels = np.load(os.path.join(folder, labelsFile))
+    distLabels = sorted(list(set(labels)))
+    print(distLabels)
+
+    nInp, nLatent, L = 784, 2, 1
+    layers           = [700, 500, 100]
+    activations      = [tf.tanh, tf.tanh, tf.tanh]
+
+    vae = AElib.AE(nInp, layers, activations, nLatent, L)
+    
+    print('VAE instance generated')
+    vae.restorePoints.append( '../models/2018-04-03--00-19-41/model.ckpt' )
+
+    mu, sigma = vae.getLatent(X, vae.restorePoints[-1])
+
+    plt.figure(figsize=(4,4))
+    plt.axes([0.1, 0.1, 0.89, 0.89])
+    for l in distLabels:
+        rows = labels == l
+        plt.scatter(mu[rows, 0], mu[rows, 1], c=plt.cm.tab10(l/10), label=str(l))
+    plt.axis('equal')
+    plt.legend()
+    plt.savefig('../results/img/mu-{}.png'.format(dt.now().strftime('%Y-%m-%d--%H-%M-%S')))
+    plt.close('all')
+    
+    return
+
 
 @lD.log(logBase + '.main')
 def main(logger):
@@ -239,7 +287,8 @@ def main(logger):
     '''
 
     # testVAE()
-    testVAE1()
+    # testVAE1()
+    loadSavedModel()
 
     return
 

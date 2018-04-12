@@ -11,7 +11,7 @@ from datetime import datetime as dt
 import matplotlib.pyplot as plt
 
 config = json.load(open('../config/config.json'))
-logBase = config['logging']['logBase'] + '.modules.module1.module1'
+logBase = config['logging']['logBase'] + '.modules.AE.AE'
 
 
 @lD.log(logBase + '.testVAE')

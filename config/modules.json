@@ -16,6 +16,13 @@
     {
         "moduleName" : "AE",
         "path"       : "modules/AE/AE.py",
+        "execute"    : false,
+        "description": "",
+        "owner"      : ""
+    },
+    {
+        "moduleName" : "ConvVAE",
+        "path"       : "modules/ConvVAE/ConvVAE.py",
         "execute"    : true,
         "description": "",
         "owner"      : ""

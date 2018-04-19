@@ -1,7 +1,7 @@
 #!/bin/bash 
 
 # --- First, run the program
-python3 val.py
+python3.6 val.py
 
 # --- Check to see if there was an error
 logFile=$(ls logs/*.log | sort | tail -n1)

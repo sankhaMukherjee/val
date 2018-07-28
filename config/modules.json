@@ -16,6 +16,13 @@
     {
         "moduleName" : "AE",
         "path"       : "modules/AE/AE.py",
+        "execute"    : false,
+        "description": "",
+        "owner"      : ""
+    },
+    {
+        "moduleName" : "CVAE",
+        "path"       : "modules/CVAE/CVAE.py",
         "execute"    : true,
         "description": "",
         "owner"      : ""

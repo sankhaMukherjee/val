@@ -13,7 +13,7 @@ logBase = config['logging']['logBase'] + '.lib.CAElib'
 class CVAE():
 
     @lD.log(logBase + '.AE.__init__')
-    def __init__(logger, self, nInp, layers, activations, nLatent, L=1.5):
+    def __init__(logger, self, nInp, nLabel, layers, activations, nLatent, L=1.5):
         '''[summary]
         
         [description]
@@ -26,6 +26,7 @@ class CVAE():
                 The logger function
             self {[type]} -- [description]
             nInp {[type]} -- [description]
+            nLabel {[type]} -- [description]
             layers {[type]} -- [description]
             activations {[type]} -- [description]
             nLatent {[type]} -- [description]
@@ -35,6 +36,7 @@ class CVAE():
         '''
 
         self.nInp    = nInp
+        self.nLabel  = nLabel
         self.nLatent = nLatent
         self.L       = L
         self.restorePoints = []
@@ -42,6 +44,9 @@ class CVAE():
         self.Inp  = tf.placeholder(
                         dtype=tf.float32, 
                         shape=(None, nInp))
+        self.Labels  = tf.placeholder(
+                        dtype=tf.float32, 
+                        shape=(None, nLabel))
 
         # ------------------------------------------------------------
         # Generate the encoder network
@@ -52,6 +57,8 @@ class CVAE():
                 self.encoder = tf.layers.dense(self.Inp, l, activation=a)
             else:
                 self.encoder = tf.layers.dense(self.encoder, l, activation=a)
+
+        self.encoder = tf.concat([self.encoder, self.Labels], axis=1)
 
         # -- Dense map to Latent Space ---------
         # Note the sigmas has to be positive. Hence the sigmoid activation
@@ -69,6 +76,8 @@ class CVAE():
 
         # self.decoder = self.Latent * self.LSigma + self.LMu 
         self.decoder = self.Latent * self.sigma + self.mu 
+        self.decoder = tf.concat([self.decoder, self.Labels], axis=1)
+
         for i, (l, a) in enumerate(zip(
                         reversed(layers), reversed(activations))):
             self.decoder = tf.layers.dense(self.decoder, l, activation=a)
@@ -116,7 +125,7 @@ class CVAE():
         '''
 
         now = dt.now().strftime('%Y-%m-%d--%H-%M-%S')
-        modelFolder = '../models/{}'.format(now)
+        modelFolder = '../models/cvae-{}'.format(now)
         os.makedirs(modelFolder)
 
         path = self.saver.save( sess, os.path.join( modelFolder, 'model.ckpt' ) )
@@ -125,7 +134,7 @@ class CVAE():
         return path
 
     @lD.log(logBase + '.AE.getLatent')
-    def getLatent(logger, self, X, restorePoint=None):
+    def getLatent(logger, self, X, labels, restorePoint=None):
         try:
             with tf.Session() as sess:
                 sess.run(self.init)
@@ -141,7 +150,7 @@ class CVAE():
 
 
                 mu, sigma = sess.run([self.mu, self.sigma], 
-                                feed_dict = { self.Inp : X} )
+                                feed_dict = { self.Inp : X, self.Labels:labels} )
 
                 return mu, sigma   
         except Exception as e:
@@ -150,7 +159,7 @@ class CVAE():
         return
 
     @lD.log(logBase + '.AE.fit')
-    def fit(logger, self, X, Niter=101, restorePoint=None):
+    def fit(logger, self, X, labels, Niter=101, restorePoint=None):
         '''[summary]
         
         [description]
@@ -182,7 +191,7 @@ class CVAE():
 
 
                 mu, sigma = sess.run([self.mu, self.sigma], 
-                                feed_dict = { self.Inp : X} )
+                                feed_dict = { self.Inp : X, self.Labels : labels} )
 
                 print('Initial Latent State mean:')
                 print(mu.mean(axis=0))
@@ -195,11 +204,12 @@ class CVAE():
                             [self.Opt, self.aeErr, self.KLErr, self.Err], 
                             feed_dict = {
                                 self.Inp    : X,
-                                self.Latent : latent})
+                                self.Latent : latent, 
+                                self.Labels : labels})
 
 
                 mu, sigma = sess.run([self.mu, self.sigma], 
-                                feed_dict = { self.Inp : X} )
+                                feed_dict = { self.Inp : X, self.Labels : labels} )
                 print('Final Latent State mean:')
                 print(mu.mean(axis=0))
 
@@ -210,7 +220,7 @@ class CVAE():
         return
 
     @lD.log(logBase + '.AE.predict')
-    def predict(logger, self, X, restorePoint=None):
+    def predict(logger, self, X, labels, restorePoint=None):
         try:
             with tf.Session() as sess:
                 sess.run(self.init)
@@ -224,12 +234,15 @@ class CVAE():
                         logger.error('Unable to restore the session at [{}]:{}'.format(
                             restorePoint, str(e)))
 
-                mu     = sess.run(self.mu, feed_dict = {self.Inp : X})
+                mu     = sess.run(self.mu, 
+                        feed_dict = {self.Inp : X,
+                        self.Labels : labels})
                 latent = np.random.normal( 0, 1, mu.shape )
                 xHat   = sess.run(self.decoder, 
                         feed_dict = {
                             self.Inp    : X,
-                            self.Latent : latent })
+                            self.Latent : latent, 
+                            self.Labels : labels})
 
                 return xHat
                 

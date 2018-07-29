@@ -12,7 +12,7 @@ logBase = config['logging']['logBase'] + '.lib.CAElib'
 
 class CVAE():
 
-    @lD.log(logBase + '.AE.__init__')
+    @lD.log(logBase + '.CVAE.__init__')
     def __init__(logger, self, nInp, nLabel, layers, activations, nLatent, L=1.5):
         '''[summary]
         
@@ -109,7 +109,7 @@ class CVAE():
 
         return
 
-    @lD.log(logBase + '.AE.saveModel')
+    @lD.log(logBase + '.CVAE.saveModel')
     def saveModel(logger, self, sess):
         '''[summary]
         
@@ -133,7 +133,7 @@ class CVAE():
 
         return path
 
-    @lD.log(logBase + '.AE.getLatent')
+    @lD.log(logBase + '.CVAE.getLatent')
     def getLatent(logger, self, X, labels, restorePoint=None):
         try:
             with tf.Session() as sess:
@@ -158,7 +158,7 @@ class CVAE():
 
         return
 
-    @lD.log(logBase + '.AE.fit')
+    @lD.log(logBase + '.CVAE.fit')
     def fit(logger, self, X, labels, Niter=101, restorePoint=None):
         '''[summary]
         
@@ -219,7 +219,7 @@ class CVAE():
 
         return
 
-    @lD.log(logBase + '.AE.predict')
+    @lD.log(logBase + '.CVAE.predict')
     def predict(logger, self, X, labels, restorePoint=None):
         try:
             with tf.Session() as sess:
@@ -248,5 +248,28 @@ class CVAE():
                 
         except Exception as e:
             logger.error('Unable to fit the model: {}'.format( str(e) ))
+
+        return
+
+    @lD.log(logBase + '.CVAE.predict')
+    def decode(logger, self, mu, labels, restorePoint):
+
+        try:
+            with tf.Session() as sess:
+                sess.run(self.init)
+                self.saver.restore(sess, restorePoint)
+                
+                xHat   = sess.run(self.decoder, 
+                        feed_dict = {
+                            self.mu     : mu,
+                            self.sigma  : np.zeros(mu.shape).astype(np.float32),
+                            self.Latent : np.zeros(mu.shape).astype(np.float32), 
+                            self.Labels : labels
+                            })
+
+                return xHat
+
+        except Exception as e:
+            logger.error('Unable to generate a result for CVAE: {}'.format(e))
 
         return

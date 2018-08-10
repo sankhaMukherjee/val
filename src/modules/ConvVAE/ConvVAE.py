@@ -2,6 +2,8 @@ import json, os
 import numpy      as np
 import tensorflow as tf
 
+import matplotlib.pyplot as plt
+
 from lib  import ConvVAELib 
 from logs import logDecorator as lD 
 from tqdm import tqdm 
@@ -41,9 +43,9 @@ def testConvVAE(logger):
     labels = np.load(os.path.join(folder, labelsFile))
 
     # Parameters for the network
-    filters     = [4, 16, 64]
-    kernels     = [20, 8, 4]
-    strides     = [2, 1, 1]
+    filters     = [1, 7, 10]
+    kernels     = [3, 4, 5]
+    strides     = [2, 2, 1]
     activations = [tf.nn.relu, tf.nn.relu, tf.nn.relu]
 
     nLatent     = 2
@@ -52,7 +54,7 @@ def testConvVAE(logger):
                 filters, kernels, strides, activations, 
                 nLatent, L=1.5)
 
-    X1 = X[:77, :, :, :]
+    # X1 = X[:77, :, :, :]
     # with tf.Session() as sess:
     #     sess.run( cVAE.init )
     #     encoder = sess.run( cVAE.encoder, feed_dict = {cVAE.Inp: X1})
@@ -64,8 +66,39 @@ def testConvVAE(logger):
     #                     cVAE.Inp: X1, cVAE.Latent : latent})
 
 
-    cVAE.fit(X, Niter=101)
+    plt.figure(figsize=(5, 8))
+    for i in tqdm(range(40)):
+        x, y = i//8, i%8
+        ax = plt.axes([ x*0.2, y*0.125 , 0.2, 0.125])
+        ax.imshow(X[i].reshape(28,28), cmap=plt.cm.gray)
+        ax.set_xticks([])
+        ax.set_yticks([])
     
+    plt.savefig('../results/img/conv/X.png')
+    plt.close('all')
+
+    for it in tqdm(range(1000)):
+
+        if it > 0:
+            cVAE.fit(X, Niter=10, restorePoint=cVAE.restorePoints[-1])
+        else:
+            cVAE.fit(X, Niter=10)
+
+        Xhat  = cVAE.predict(X[:40,:,:, :], cVAE.restorePoints[-1])
+        Xhat1 = cVAE.predict2D(X[:2,:,:, :], cVAE.restorePoints[-1])
+        tqdm.write('{}'.format(Xhat1.shape))
+        
+        plt.figure(figsize=(5, 8))
+
+        for i in tqdm(range(40)):
+            x, y = i//8, i%8
+            ax = plt.axes([ x*0.2, y*0.125 , 0.2, 0.125])
+            ax.imshow(Xhat[i].reshape(28,28), cmap=plt.cm.gray)
+            ax.set_xticks([])
+            ax.set_yticks([])
+        
+        plt.savefig('../results/img/conv/Xhat_{:04d}.png'.format(it))
+        plt.close('all')
 
     return
 

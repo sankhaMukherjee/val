@@ -1,6 +1,7 @@
 from logs import logDecorator as lD
 import json, importlib
 from importlib import util
+import os
 
 config = json.load(open('../config/config.json'))
 logBase = config['logging']['logBase']
@@ -51,6 +52,8 @@ def main(logger):
     This is the place where the entire program is going
     to be generated.
     '''
+
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
     # First import all the modules, and run 
     # them

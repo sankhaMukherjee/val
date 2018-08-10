@@ -72,21 +72,21 @@ class ConvVAE():
 
         for f, k, s, a in zip(reversed(filters), reversed(kernels), reversed(strides),
                         reversed(activations) ):
-            print(f, k, s, a)
+            # print(f, k, s, a)
             self.decoder = tf.layers.conv2d_transpose(
                     self.decoder, filters = f, 
                     kernel_size = k, strides = s, padding = 'valid',
                     activation = a)
 
         # Only sane way of getting data back to the same shape
-        self.decoder = tf.layers.flatten(self.decoder)
-        self.decoder = tf.layers.dense(self.decoder, nInpX*nInpY, activation=tf.nn.sigmoid)
+        self.decoder  = tf.layers.flatten(self.decoder)
+        self.decoder1 = tf.layers.dense(self.decoder, nInpX*nInpY, activation=tf.nn.sigmoid)
         
         # # ------------------------------------------------------------
         # # Generate the the cost functions
         # # ------------------------------------------------------------
         # # ----- Reconstruction Error ----------------
-        self.aeErr = self.Inp1 * tf.log( self.decoder ) + (1-self.Inp1) * tf.log( 1 - self.decoder )
+        self.aeErr = self.Inp1 * tf.log( self.decoder1 + 1e-10 ) + (1-self.Inp1) * tf.log( 1 - self.decoder1 + 1e-10 )
         self.aeErr = tf.reduce_sum( self.aeErr, 1)
         self.aeErr = tf.reduce_mean( -1*self.aeErr )
 
@@ -191,8 +191,8 @@ class ConvVAE():
                 mu, sigma = sess.run([self.mu, self.sigma], 
                                 feed_dict = { self.Inp : X} )
 
-                print('Initial Latent State mean:')
-                print(mu.mean(axis=0))
+                # print('Initial Latent State mean:')
+                # print(mu.mean(axis=0))
 
                 for i in tqdm(range(Niter)):
 
@@ -218,6 +218,35 @@ class ConvVAE():
 
     @lD.log(logBase + '.AE.predict')
     def predict(logger, self, X, restorePoint=None):
+        try:
+            with tf.Session() as sess:
+                sess.run(self.init)
+
+                # Try to restore an older checkpoint
+                # ---------------------------------------
+                if restorePoint is not None:
+                    try:
+                        self.saver.restore(sess, restorePoint)
+                    except Exception as e:
+                        logger.error('Unable to restore the session at [{}]:{}'.format(
+                            restorePoint, str(e)))
+
+                mu     = sess.run(self.mu, feed_dict = {self.Inp : X})
+                latent = np.random.normal( 0, 1, mu.shape )
+                xHat   = sess.run(self.decoder1, 
+                        feed_dict = {
+                            self.Inp    : X,
+                            self.Latent : latent })
+
+                return xHat
+                
+        except Exception as e:
+            logger.error('Unable to fit the model: {}'.format( str(e) ))
+
+        return
+
+    @lD.log(logBase + '.AE.predict2D')
+    def predict2D(logger, self, X, restorePoint=None):
         try:
             with tf.Session() as sess:
                 sess.run(self.init)

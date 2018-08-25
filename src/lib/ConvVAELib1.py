@@ -78,15 +78,18 @@ class ConvVAE():
                     kernel_size = k, strides = s, padding = 'valid',
                     activation = a)
 
-        # Only sane way of getting data back to the same shape
-        self.decoder  = tf.layers.flatten(self.decoder)
-        self.decoder1 = tf.layers.dense(self.decoder, nInpX*nInpY, activation=tf.nn.sigmoid)
-        
+        # We are resizing the images here. We no longer need another layer
+        # which might distort the layers ...
+        self.decoder3 = tf.image.resize_images(self.decoder, (nInpY, nInpX))
+        # self.decoder3 = tf.image.crop_to_bounding_box(self.decoder, 0, 0, nInpY, nInpX) # We are close enough
+        self.decoder4 = tf.layers.flatten(self.decoder3)
+        self.decoder4 = tf.sigmoid( self.decoder4 )
+
         # # ------------------------------------------------------------
         # # Generate the the cost functions
         # # ------------------------------------------------------------
         # # ----- Reconstruction Error ----------------
-        self.aeErr = self.Inp1 * tf.log( self.decoder1 + 1e-10 ) + (1-self.Inp1) * tf.log( 1 - self.decoder1 + 1e-10 )
+        self.aeErr = self.Inp1 * tf.log( self.decoder4 + 1e-10 ) + (1-self.Inp1) * tf.log( 1 - self.decoder4 + 1e-10 )
         self.aeErr = tf.reduce_sum( self.aeErr, 1)
         self.aeErr = tf.reduce_mean( -1*self.aeErr )
 
@@ -207,8 +210,8 @@ class ConvVAE():
 
                 mu, sigma = sess.run([self.mu, self.sigma], 
                                 feed_dict = { self.Inp : X} )
-                print('Final Latent State mean:')
-                print(mu.mean(axis=0))
+                # print('Final Latent State mean:')
+                # print(mu.mean(axis=0))
 
                 self.saveModel(sess)
         except Exception as e:
@@ -233,7 +236,7 @@ class ConvVAE():
 
                 mu     = sess.run(self.mu, feed_dict = {self.Inp : X})
                 latent = np.random.normal( 0, 1, mu.shape )
-                xHat   = sess.run(self.decoder1, 
+                xHat   = sess.run(self.decoder4, 
                         feed_dict = {
                             self.Inp    : X,
                             self.Latent : latent })

@@ -23,6 +23,13 @@
     {
         "moduleName" : "ConvVAE",
         "path"       : "modules/ConvVAE/ConvVAE.py",
+        "execute"    : false,
+        "description": "",
+        "owner"      : ""
+    },
+    {
+        "moduleName" : "ConvVAE1",
+        "path"       : "modules/ConvVAE1/ConvVAE1.py",
         "execute"    : true,
         "description": "",
         "owner"      : ""

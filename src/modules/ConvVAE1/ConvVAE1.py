@@ -30,8 +30,8 @@ def testConvVAE(logger):
     file       = 't10k-images-idx3-ubytenpy.npy'
     labelsFile = 't10k-labels-idx1-ubytenpy.npy'
     now        = dt.now().strftime('%Y-%m-%d--%H-%M-%S')
-    imgFolder  = '../results/img/{}'.format(now)
-    os.makedirs(imgFolder)
+    # imgFolder  = '../results/img/{}'.format(now)
+    # os.makedirs(imgFolder)
 
     nInpX, nInpY, nInpCh = 28, 28, 1
     X = np.load(os.path.join(folder, file)).astype(np.float32)
@@ -92,12 +92,12 @@ def testConvVAE(logger):
     plt.savefig('../results/img/conv/X.png')
     plt.close('all')
 
-    for it in tqdm(range(10)):
+    for it in tqdm(range(1000)):
 
         if it > 0:
-            cVAE.fit(X, Niter=1000, restorePoint=cVAE.restorePoints[-1])
+            cVAE.fit(X, Niter=100, restorePoint=cVAE.restorePoints[-1])
         else:
-            cVAE.fit(X, Niter=1000)
+            cVAE.fit(X, Niter=100)
 
         Xhat  = cVAE.predict(X[:40,:,:, :], cVAE.restorePoints[-1])
         # Xhat1 = cVAE.predict2D(X[:2,:,:, :], cVAE.restorePoints[-1])

@@ -1,0 +1,6 @@
+model_checkpoint_path: "model.ckpt"
+all_model_checkpoint_paths: "../2018-08-25--23-40-38/model.ckpt"
+all_model_checkpoint_paths: "../2018-08-25--23-40-46/model.ckpt"
+all_model_checkpoint_paths: "../2018-08-25--23-40-55/model.ckpt"
+all_model_checkpoint_paths: "../2018-08-25--23-41-04/model.ckpt"
+all_model_checkpoint_paths: "model.ckpt"

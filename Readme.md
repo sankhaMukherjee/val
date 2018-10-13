@@ -1,6 +1,13 @@
 # val
 
-One Paragraph of project description goes here
+This is a repository that looks into several different types of autoencoders. 
+
+Practically all of this is experimental code, so use it with caution. Most of the code is distributed over multiple branches. They have not been merged, and probably will never be. Currently, the different branches available are the following:
+
+ - master: This is the main branch. A basic fully-connected variational autoencoder is available in this branch. Most branches use this as a baseline to start exploring a new type of encoder.
+ - dev: This is supposed to be the dev branch. Most branches branch out from here 
+ - conv: This is an autoencoder that uses convolutional neural network
+ - cvae: This is labeled variational autoencoder. 
 
 ## Getting Started
 
@@ -12,7 +19,7 @@ You will need to have a valid Python installation on your system. This has been 
 
 ## Installing
 
-The folloiwing installations are for *nix-like systems. These have been tried on macOS Sierra (Version 10.12.6) before. 
+The folloiwing installations are for `*nix`-like systems. These have been tried on macOS Sierra (Version 10.12.6) before. 
 
 1. Clone the program to your computer. 
 2. type `make firstRun`. This should do the following
@@ -25,9 +32,6 @@ The folloiwing installations are for *nix-like systems. These have been tried on
 5. Generate your documentation folder by running `make doc`. 
 6. Check whether all the tests pass with the command `make test`. This uses py.test for running tests. 
 
-## Deployment
-
-Add additional notes about how to deploy this on a live system
 
 ## Built With
 
@@ -43,7 +47,7 @@ Sankha Mukherjee - Initial work (2018)
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.txt](LICENSE.txt) file for details
+This project is licensed under the MIT License - see the [LICENSE.txt](https://github.com/sankhaMukherjee/val/blob/master/LICENCE.txt) file for details
 
 ## Acknowledgments
 
